@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRIGGER SET GENERATOR</title>
+
+<!-- PWA / Web App -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="TRIGGER SET">
+
+<!-- Icons -->
+<link rel="icon" type="image/png" sizes="192x192" href="app-icons/icon-192.png">
+<link rel="apple-touch-icon" href="app-icons/apple-touch-icon.png">
+
+<!-- OGP (SNSシェア用) -->
+<meta property="og:title" content="TRIGGER SET GENERATOR">
+<meta property="og:description" content="ワールドトリガー風 キャラクタートリガーセットメーカー">
+<meta property="og:type" content="website">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c12;--panel:#13131e;--ecrd:#191926;--border:#252535;--border2:#303048;
+  --txt:#dde0f0;--txt2:#7a7a9a;--txt3:#3a3a5a;
+  /* card colors */
+  --slot:#c6c6c6;--free:#d4d4d4;--icon-bg:#0c0c0c;
+  --panel-gap:#000;
+}
+body{background:var(--bg);color:var(--txt);font-family:'Noto Sans JP',sans-serif;min-height:100vh}
+
+/* ── APP HEADER ── */
+.hdr{background:#000;border-bottom:2px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:14px}
+.hdr-ttl{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;letter-spacing:3px;color:#00b4b0}
+.hdr-sub{font-size:10px;color:var(--txt2);letter-spacing:1px}
+.wrap{display:flex;min-height:calc(100vh - 46px)}
+
+/* ── EDITOR ── */
+.ed{width:295px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);
+  padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.ecrd{background:var(--ecrd);border:1px solid var(--border);border-radius:5px;overflow:hidden}
+.ecrd-hd{background:#000;padding:7px 11px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border)}
+.ecrd-hd .en{font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;color:#fff}
+.ecrd-hd .ja{font-size:10px;color:var(--txt2)}
+.ecrd-body{padding:8px 11px;display:flex;flex-direction:column;gap:8px}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:10px;color:var(--txt2)}
+.field-row{display:flex;gap:6px}
+.field-row .field{flex:1}
+
+/* image upload */
+.img-upload{
+  width:100%;aspect-ratio:1;max-width:160px;align-self:center;
+  background:#0d0d18;border:2px dashed var(--border2);border-radius:4px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;overflow:hidden;position:relative;transition:border-color .15s;
+}
+.img-upload:hover{border-color:#555}
+.img-upload img{width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0}
+.img-upload .ph{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:1px;color:var(--txt3);text-align:center;pointer-events:none}
+.img-upload .ph-icon{font-size:20px;opacity:.3;pointer-events:none}
+
+select,input[type=text],textarea{
+  background:#090910;border:1px solid var(--border2);color:var(--txt);
+  padding:4px 7px;font-family:'Noto Sans JP',sans-serif;font-size:11px;
+  border-radius:3px;outline:none;width:100%;
+}
+select:focus,input:focus,textarea:focus{border-color:#555}
+textarea{resize:vertical;line-height:1.5}
+
+/* slot rows */
+.srow{display:flex;flex-direction:column;gap:4px;padding:7px 10px;border-top:1px solid var(--border)}
+.srow-top{display:flex;align-items:center;gap:5px}
+.srow-bot{padding-left:21px}
+.snum{width:16px;height:16px;border-radius:50%;background:#1e1e2e;color:#666;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tsel-fw,.nsel-fw,.cinp-fw{width:100%}
+.cinp-fw{margin-top:3px}
+
+/* actions */
+.acts{display:flex;flex-direction:column;gap:5px}
+.acts-row{display:flex;gap:5px}
+.btn{border:none;border-radius:4px;padding:7px 10px;cursor:pointer;
+  font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.5px;transition:filter .12s,transform .1s}
+.btn:hover{filter:brightness(1.3)}.btn:active{transform:scale(.97)}
+.btn-rnd{flex:1;background:#112238;color:#7aaccf}
+.btn-rst{flex:1;background:#1e1e1e;color:#aaa}
+.btn-gen{width:100%;background:#0e220e;color:#88d088;font-size:15px;padding:12px;letter-spacing:1px}
+.btn-exp{flex:1;background:#1a1a0e;color:#c8c870;font-size:12px}
+.btn-imp{flex:1;background:#0e1a1a;color:#70c8c8;font-size:12px}
+
+/* ── PREVIEW ── */
+.prev{flex:1;padding:22px;display:flex;flex-direction:column;align-items:center;gap:14px;
+  overflow:auto;
+  background:radial-gradient(ellipse at 25% 25%,#141430 0%,transparent 55%),
+             radial-gradient(ellipse at 75% 75%,#180808 0%,transparent 55%),var(--bg)}
+.prev-meta{width:620px;display:flex;justify-content:space-between;align-items:center}
+.prev-tag{font-size:10px;color:var(--txt3);letter-spacing:1px;text-transform:uppercase}
+
+/* ══════════════════════════════
+   OUTPUT CARD
+══════════════════════════════ */
+#output-card{
+  width:620px;
+  background:#000;
+  flex-shrink:0;
+  font-family:'Noto Sans JP',sans-serif;
+  box-shadow:0 16px 60px rgba(0,0,0,.8);
+  display:flex;flex-direction:column;
+}
+
+/* ① PROFILE — 130px */
+.out-profile{
+  height:130px;flex-shrink:0;
+  display:flex;align-items:stretch;
+  border-bottom:2px solid #1a1a1a;
+}
+.out-img{
+  width:130px;height:130px;flex-shrink:0;
+  background:#111;border-right:2px solid #1a1a1a;
+  overflow:hidden;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.out-img img{width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0}
+.out-img .out-img-ph{
+  font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:1px;
+  color:#333;text-align:center;line-height:1.8;
+}
+.out-info{
+  flex:1;padding:10px 14px;
+  display:flex;flex-direction:column;justify-content:center;gap:10px;
+}
+.out-name-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px;line-height:1.2}
+.out-name{
+  font-family:'Noto Sans JP',sans-serif;
+  font-size:24px;font-weight:900;color:#fff;line-height:1.1;
+}
+.out-name.empty{font-size:16px;color:#555}
+.badge{
+  font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;
+  padding:1px 7px;letter-spacing:.5px;
+  display:inline-flex;align-items:center;
+}
+.badge-rank,.badge-team,.badge-pos{background:#333;border:none;color:#fff;font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 8px;display:inline-flex;align-items:center;flex-shrink:0}
+.out-style-txt{font-size:11px;color:#aaa;line-height:1.5;white-space:pre-wrap}
+
+/* ② TRIGGER SET header */
+.chead{
+  height:52px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;padding:0 12px;
+  background:#111;
+}
+.carr{font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;color:#fff;letter-spacing:-4px;line-height:1}
+.ctitle{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;letter-spacing:4px;color:#fff}
+.ctitle-ja{font-size:12px;color:#aaa;letter-spacing:1px}
+
+/* ② TRIGGER SET body */
+.cbody{
+  height:322px;flex-shrink:0;
+  display:flex;align-items:stretch;
+  background:var(--panel-gap);
+}
+.clbl{
+  width:22px;flex-shrink:0;
+  background:var(--panel-gap);
+  position:relative;overflow:hidden;
+}
+.clbl-txt{
+  position:absolute;top:50%;left:50%;
+  white-space:nowrap;display:flex;align-items:center;gap:5px;
+}
+.clbl.sub .clbl-txt{transform:translate(-50%,-50%) rotate(-90deg)}
+.clbl:not(.sub) .clbl-txt{transform:translate(-50%,-50%) rotate(90deg)}
+.clbl-en{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;color:#fff;line-height:1}
+.clbl-en b{font-size:12px}
+.clbl-ja{font-size:7px;color:#bbb;font-family:'Noto Sans JP',sans-serif;letter-spacing:0}
+.cslots{flex:1;display:flex;flex-direction:column;gap:3px;padding:3px;background:var(--panel-gap)}
+.cdiv{width:4px;background:var(--panel-gap);flex-shrink:0}
+
+/* trigger slots */
+.tslot{flex:1;display:flex;align-items:stretch;background:var(--slot);position:relative;overflow:hidden}
+.tslot-ico{
+  width:76px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:flex-start;
+  padding:4px 0 4px 4px;box-sizing:border-box;
+}
+.tslot-ico-inner{
+  width:68px;height:68px;flex-shrink:0;
+  background:var(--icon-bg);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.tslot-ico svg{width:44px;height:44px}
+
+.tslot-cnt{flex:1;display:flex;flex-direction:column;padding:7px 14px 12px 10px;overflow:hidden;z-index:0}
+.tslot-top{flex-shrink:0;display:flex;flex-direction:column;gap:0}
+.tname-wrap{flex:1;overflow:hidden;position:relative;min-height:0;}
+.ttype{font-size:14px;font-family:'Oswald',sans-serif;font-weight:400;color:#0d0d0d;letter-spacing:.3px;line-height:1;flex-shrink:0}
+.tsep{display:flex;align-items:center}
+.tsep-line{flex:1;height:1px;background:#0d0d0d}
+.tsep-dot{width:5px;height:5px;border-radius:50%;background:#0d0d0d;flex-shrink:0;margin-left:3px}
+.tname{position:absolute;left:0;top:2px;font-weight:900;color:#0d0d0d;line-height:1;letter-spacing:-.5px;font-size:36px;white-space:nowrap;transform-origin:left top;display:block}
+.tslot::after{
+  content:'';position:absolute;bottom:0;right:0;width:0;height:0;
+  border-bottom:12px solid var(--panel-gap);
+  border-left:12px solid transparent;
+  z-index:5;
+}
+.tdot{width:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.tdot::after{content:'';display:block;width:5px;height:5px;border-radius:50%;background:#999}
+.tslot.free{background:var(--free);align-items:center;justify-content:center}
+.free-lbl{font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:#888}
+
+/* ③ NOTES */
+.out-notes{
+  border-top:2px solid #1a1a1a;
+  display:flex;flex-direction:column;
+}
+.out-notes-hd{
+  padding:5px 12px;flex-shrink:0;
+  font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:#555;
+  border-bottom:1px solid #1a1a1a;
+  display:flex;align-items:center;gap:6px;
+}
+.out-notes-hd span{font-size:8px;color:#444;font-family:'Noto Sans JP',sans-serif;letter-spacing:0}
+.out-notes-body{
+  padding:8px 12px;
+  font-size:11px;color:#888;line-height:1.7;
+  white-space:pre-wrap;
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <span class="hdr-ttl">▶▶ TRIGGER SET GENERATOR ◀◀</span>
+  <span class="hdr-sub">ワールドトリガー風 キャラクターカードメーカー</span>
+</div>
+
+<div class="wrap">
+  <!-- ═══ EDITOR ═══ -->
+  <div class="ed">
+
+    <!-- CHARACTER -->
+    <div class="ecrd">
+      <div class="ecrd-hd"><span class="en">CHARACTER</span><span class="ja">キャラクター情報</span></div>
+      <div class="ecrd-body">
+
+        <div class="field">
+          <label>顔写真（正方形推奨）</label>
+          <div class="img-upload" id="img-upload-area" onclick="document.getElementById('img-file').click()">
+            <img id="ed-preview-img" alt="">
+            <span class="ph-icon">🖼</span>
+            <span class="ph">クリックして選択</span>
+          </div>
+          <input type="file" id="img-file" accept="image/*" style="display:none">
+        </div>
+
+        <div class="field">
+          <label>名前</label>
+          <input type="text" id="char-name" placeholder="例：三雲修" maxlength="20" oninput="updateCard()">
+        </div>
+
+        <!-- 所属 -->
+        <div class="field-row">
+          <div class="field">
+            <label>ランク</label>
+            <select id="char-rank" onchange="updateCard()">
+              <option value="">—</option>
+              <option value="S級">S級</option>
+              <option value="A級">A級</option>
+              <option value="B級">B級</option>
+              <option value="C級">C級</option>
+              <option value="訓練生">訓練生</option>
+              <option value="職員">職員</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>所属</label>
+            <select id="char-team-type" onchange="teamTypeChanged()">
+              <option value="">—</option>
+              <option value="隊">〇〇隊（入力）</option>
+              <option value="個人">個人</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" id="team-name-field" style="display:none">
+          <label>部隊名</label>
+          <input type="text" id="char-team-name" placeholder="例：玉狛" maxlength="10" oninput="updateCard()">
+        </div>
+        <div class="field">
+          <label>ポジション</label>
+          <select id="char-pos" onchange="updateCard()">
+            <option value="">—</option>
+            <option value="攻撃手">攻撃手</option>
+            <option value="銃手">銃手</option>
+            <option value="射手">射手</option>
+            <option value="狙撃手">狙撃手</option>
+            <option value="万能手">万能手</option>
+            <option value="特殊工作兵">特殊工作兵</option>
+            <option value="オペレーター">オペレーター</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>戦闘スタイル</label>
+          <textarea id="char-style" rows="2" placeholder="例：接近戦オールラウンダー" maxlength="80" oninput="updateCard()"></textarea>
+        </div>
+
+        <div class="field">
+          <label>備考</label>
+          <textarea id="char-notes" rows="3" placeholder="例：玉狛支部所属。B級11位。" maxlength="120" oninput="updateCard()"></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MAIN TRIGGER -->
+    <div class="ecrd">
+      <div class="ecrd-hd"><span class="en">MAIN TRIGGER</span><span class="ja">メイントリガー</span></div>
+      <div id="main-ed"></div>
+    </div>
+
+    <!-- SUB TRIGGER -->
+    <div class="ecrd">
+      <div class="ecrd-hd"><span class="en">SUB TRIGGER</span><span class="ja">サブトリガー</span></div>
+      <div id="sub-ed"></div>
+    </div>
+
+    <div class="acts">
+      <div class="acts-row">
+        <button class="btn btn-rnd" onclick="randomize()"> ランダム</button>
+        <button class="btn btn-rst" onclick="resetAll()">↺ リセット</button>
+      </div>
+      <button class="btn btn-gen" onclick="generateCard()">▶ カードジェネレート</button>
+      <div class="acts-row" style="margin-top:4px">
+        <button class="btn btn-exp" onclick="exportData()"> データ出力</button>
+        <button class="btn btn-imp" onclick="document.getElementById('imp-file').click()"> データ読込</button>
+        <input type="file" id="imp-file" accept=".json" style="display:none">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ PREVIEW ═══ -->
+  <div class="prev">
+    <div class="prev-meta">
+      <span class="prev-tag">▸ Preview / プレビュー</span>
+      <span class="prev-tag">620px width</span>
+    </div>
+
+    <div id="output-card">
+
+      <!-- ① プロフィール -->
+      <div class="out-profile">
+        <div class="out-img">
+          <img id="card-img" alt="">
+          <div class="out-img-ph">NO<br>IMAGE</div>
+        </div>
+        <div class="out-info">
+          <div class="out-name-row">
+            <span class="out-name empty" id="card-name">— NAME —</span>
+            <span class="badge badge-rank" id="card-rank" style="display:none"></span>
+            <span class="badge badge-team" id="card-team" style="display:none"></span>
+            <span class="badge badge-pos" id="card-pos" style="display:none"></span>
+          </div>
+          <div class="out-style-txt" id="card-style"></div>
+        </div>
+      </div>
+
+      <!-- ② トリガーセット -->
+      <div class="chead">
+        <span class="carr">▶▶</span>
+        <span class="ctitle">TRIGGER SET</span>
+        <span class="ctitle-ja">トリガーセット</span>
+        <span class="carr" style="display:inline-block;transform:scaleX(-1)">▶▶</span>
+      </div>
+      <div class="cbody">
+        <div class="clbl sub">
+          <div class="clbl-txt">
+            <span class="clbl-en"><b>SUB</b>&nbsp;TRIGGER</span>
+            <span class="clbl-ja">サブトリガー</span>
+          </div>
+        </div>
+        <div class="cslots" id="sub-card"></div>
+        <div class="cdiv"></div>
+        <div class="cslots" id="main-card"></div>
+        <div class="clbl">
+          <div class="clbl-txt">
+            <span class="clbl-en"><b>MAIN</b>&nbsp;TRIGGER</span>
+            <span class="clbl-ja">メイントリガー</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 備考 -->
+      <div class="out-notes">
+        <div class="out-notes-hd">NOTES <span>備考</span></div>
+        <div class="out-notes-body" id="card-notes"></div>
+      </div>
+
+    </div>
+
+    <span class="prev-tag" style="opacity:.3;margin-top:4px">※ カードジェネレートで別ウィンドウ表示</span>
+  </div>
+</div>
+
+<script>
+/* ─── TYPES ─── */
+const TYPES=[
+  {id:'FREE',    label:'FREE TRIGGER',    icon:null},
+  {id:'ATTACKER',label:'ATTACKER TRIGGER',icon:'attacker'},
+  {id:'GUNNER',  label:'GUNNER TRIGGER',  icon:'gunner'},
+  {id:'SNIPER',  label:'SNIPER TRIGGER',  icon:'sniper'},
+  {id:'DEFENSE', label:'DEFENSE TRIGGER', short:'DEFENSE', icon:'defense'},
+  {id:'OPTION',  label:'OPTION TRIGGER',  icon:'option'},
+  {id:'TRAPPER', label:'TRAPPER TRIGGER', short:'TRAPPER', icon:'trapper'},
+];
+
+/* ─── PRESETS ─── */
+const PRESETS={
+  FREE:[],
+  ATTACKER:[{n:'弧月',r:'こげつ'},{n:'スコーピオン'},{n:'レイガスト'},{n:'双月',r:'ふたつき'}],
+  GUNNER:[
+    {n:'アステロイド'},{n:'メテオラ'},{n:'バイパー'},{n:'ハウンド'},
+    {n:'アステロイド：拳銃',r:'ハンドガン'},{n:'メテオラ：拳銃',r:'ハンドガン'},
+    {n:'バイパー：拳銃',r:'ハンドガン'},{n:'ハウンド：拳銃',r:'ハンドガン'},
+    {n:'アステロイド：突撃銃',r:'アサルトライフル'},{n:'ハウンド：突撃銃',r:'アサルトライフル'},
+    {n:'アステロイド：散弾銃',r:'ショットガン'},{n:'メテオラ：散弾銃',r:'ショットガン'},
+    {n:'アステロイド：機関砲',r:'ガトリング'},{n:'メテオラ：擲弾銃',r:'グレネードガン'},
+  ],
+  SNIPER:[{n:'イーグレット'},{n:'ライトニング'},{n:'アイビス'}],
+  DEFENSE:[{n:'シールド'},{n:'エスクード'}],
+  TRAPPER:[{n:'スイッチボックス'}],
+  OPTION:[
+    {n:'バッグワーム'},{n:'バッグワームタグ'},{n:'グラスホッパー'},{n:'スパイダー'},
+    {n:'カメレオン'},{n:'スタアメーカー'},{n:'強化レーダー'},{n:'サイレンサー'},
+    {n:'鉛弾',r:'レッドバレット'},
+    {n:'旋空',r:'せんくう'},{n:'幻踊',r:'げんよう'},{n:'スラスター'},{n:'接続器',r:'コネクター'},
+    {n:'韋駄天',r:'いだてん'},{n:'ダミービーコン'},{n:'テレポーター'},
+    {n:'タイマー'},{n:'魔光'},
+    {n:'全武装',r:'フルアームズ'},{n:'ガイスト'},
+  ],
+};
+
+/* ─── ICONS ─── */
+const ICONS={
+  attacker:`<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+    <line x1="9" y1="44" x2="42" y2="8" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <path d="M42,8 Q49,13 39,20 Q33,14 42,8Z" fill="#fff"/>
+    <line x1="9" y1="44" x2="16" y2="36" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  </svg>`,
+  gunner:`<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="25" cy="25" r="5.5" fill="#fff"/>
+    <line x1="25" y1="19" x2="25" y2="5"  stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="25" y1="31" x2="25" y2="45" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="19" y1="25" x2="5"  y2="25" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="31" y1="25" x2="45" y2="25" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="21" y1="21" x2="10" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <line x1="29" y1="29" x2="40" y2="40" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <line x1="29" y1="21" x2="40" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <line x1="21" y1="29" x2="10" y2="40" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+  sniper:`<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+    <line x1="5" y1="47" x2="45" y2="7" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="5" y1="47" x2="13" y2="38" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+    <rect x="29" y="10" width="14" height="6" rx="1" fill="none" stroke="#fff" stroke-width="1.8" transform="rotate(-45 36 13)"/>
+  </svg>`,
+  defense:`<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="25,5 41,14.5 41,32.5 25,42 9,32.5 9,14.5" fill="none" stroke="#fff" stroke-width="3"/>
+    <polygon points="25,13 35,18.5 35,29.5 25,35 15,29.5 15,18.5" fill="none" stroke="#fff" stroke-width="2"/>
+  </svg>`,
+  trapper:`<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+    <rect x="8" y="14" width="34" height="22" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>
+    <line x1="8" y1="25" x2="42" y2="25" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="25" cy="19" r="3" fill="#fff"/>
+    <rect x="19" y="28" width="12" height="5" rx="1" fill="#fff"/>
+    <line x1="15" y1="8" x2="15" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <line x1="25" y1="6" x2="25" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="8" x2="35" y2="14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+  option:`<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="25,5 42,14.5 42,33.5 25,43 8,33.5 8,14.5" fill="none" stroke="#fff" stroke-width="2.5"/>
+    <line x1="25" y1="16" x2="25" y2="34" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <line x1="16" y1="25" x2="34" y2="25" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+};
+
+/* ─── STATE ─── */
+const mk=()=>({type:'FREE',name:''});
+let state={sub:[mk(),mk(),mk(),mk()],main:[mk(),mk(),mk(),mk()]};
+
+/* ─── IMAGE UPLOAD ─── */
+document.getElementById('img-file').onchange=function(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const url=ev.target.result;
+    const edImg=document.getElementById('ed-preview-img');
+    edImg.src=url; edImg.style.display='block';
+    document.querySelector('#img-upload-area .ph').style.display='none';
+    document.querySelector('#img-upload-area .ph-icon').style.display='none';
+    const cardImg=document.getElementById('card-img');
+    cardImg.src=url; cardImg.style.display='block';
+    document.querySelector('.out-img-ph').style.display='none';
+  };
+  reader.readAsDataURL(file);
+};
+
+/* ─── TEAM TYPE TOGGLE ─── */
+function teamTypeChanged(){
+  const v=document.getElementById('char-team-type').value;
+  document.getElementById('team-name-field').style.display=(v==='隊')?'':'none';
+  updateCard();
+}
+
+/* ─── EDITOR ─── */
+function buildEditors(){
+  ['sub','main'].forEach(side=>{
+    const el=document.getElementById(`${side}-ed`);
+    el.innerHTML='';
+    state[side].forEach((_,i)=>el.appendChild(makeRow(side,i)));
+  });
+}
+
+function makeRow(side,i){
+  const slot=state[side][i];
+  const row=document.createElement('div'); row.className='srow';
+  const top=document.createElement('div'); top.className='srow-top';
+  const num=document.createElement('div'); num.className='snum'; num.textContent=i+1;
+  const tsel=document.createElement('select'); tsel.className='tsel-fw';
+  TYPES.forEach(t=>{
+    const o=document.createElement('option'); o.value=t.id; o.textContent=t.label;
+    if(t.id===slot.type) o.selected=true; tsel.appendChild(o);
+  });
+  top.append(num,tsel);
+  const bot=document.createElement('div'); bot.className='srow-bot';
+  const nsel=document.createElement('select'); nsel.className='nsel-fw';
+  const cinp=document.createElement('input');
+  cinp.type='text'; cinp.className='cinp-fw'; cinp.placeholder='カスタムトリガー名'; cinp.style.display='none';
+
+  function rebuildNsel(type,cur){
+    nsel.innerHTML='';
+    const p=PRESETS[type]||[];
+    if(type==='FREE'){
+      const o=document.createElement('option'); o.textContent='(フリー)';
+      nsel.appendChild(o); nsel.disabled=true; cinp.style.display='none'; return;
+    }
+    nsel.disabled=false;
+    p.forEach(pr=>{
+      const o=document.createElement('option'); o.value=pr.n; o.textContent=pr.n;
+      if(pr.n===cur) o.selected=true; nsel.appendChild(o);
+    });
+    const oc=document.createElement('option'); oc.value='__c__'; oc.textContent='✏ カスタム入力...'; nsel.appendChild(oc);
+    const isc=cur&&!p.find(pr=>pr.n===cur);
+    if(isc){oc.selected=true;cinp.value=cur;cinp.style.display='';}
+    else{cinp.style.display='none';if(!cur&&p.length){nsel.value=p[0].n;state[side][i].name=p[0].n;}}
+  }
+  rebuildNsel(slot.type,slot.name);
+  nsel.onchange=()=>{
+    if(nsel.value==='__c__'){cinp.style.display='';cinp.value='';cinp.focus();state[side][i].name='';}
+    else{cinp.style.display='none';state[side][i].name=nsel.value;}
+    renderCard();
+  };
+  cinp.oninput=()=>{state[side][i].name=cinp.value;renderCard();};
+  tsel.onchange=()=>{
+    state[side][i].type=tsel.value;
+    const p=PRESETS[tsel.value];
+    state[side][i].name=p.length?p[0].n:'';
+    rebuildNsel(tsel.value,state[side][i].name); renderCard();
+  };
+  bot.append(nsel,cinp); row.append(top,bot); return row;
+}
+
+/* ─── CARD RENDER ─── */
+function renderCard(){
+  ['sub','main'].forEach(side=>{
+    document.getElementById(`${side}-card`).innerHTML=state[side].map(s=>slotHtml(s)).join('');
+  });
+  const name=(document.getElementById('char-name').value||'').trim();
+  const rank=document.getElementById('char-rank').value;
+  const teamType=document.getElementById('char-team-type').value;
+  const teamName=(document.getElementById('char-team-name').value||'').trim();
+  const style=(document.getElementById('char-style').value||'').trim();
+  const notes=(document.getElementById('char-notes').value||'').trim();
+
+  // 名前
+  const nameEl=document.getElementById('card-name');
+  if(name){nameEl.textContent=name;nameEl.classList.remove('empty');}
+  else{nameEl.textContent='— NAME —';nameEl.classList.add('empty');}
+
+  // 所属バッジ
+  const pos=(document.getElementById('char-pos').value||'').trim();
+  const rankEl=document.getElementById('card-rank');
+  const teamEl=document.getElementById('card-team');
+  const posEl=document.getElementById('card-pos');
+  rankEl.textContent=rank;
+  let teamTxt='';
+  if(teamType==='隊'&&teamName) teamTxt=`${teamName}隊`;
+  else if(teamType==='個人') teamTxt='個人';
+  teamEl.textContent=teamTxt;
+  posEl.textContent=pos;
+  rankEl.style.display=rank?'':'none';
+  teamEl.style.display=teamTxt?'':'none';
+  posEl.style.display=pos?'':'none';
+
+  // スタイル・備考
+  document.getElementById('card-style').textContent=style;
+  document.getElementById('card-notes').textContent=notes;
+  document.fonts.ready.then(fitNames);
+}
+function updateCard(){renderCard();}
+
+function measureTextW(text){
+  // Canvas で実際のテキスト幅を取得（DOMクリッピングに依存しない）
+  const c=document.createElement('canvas');
+  const ctx=c.getContext('2d');
+  ctx.font='900 36px "Noto Sans JP", sans-serif';
+  return ctx.measureText(text).width;
+}
+
+function fitNames(){
+  // 利用可能幅を CSS 値から計算
+  // 620(card) - 22(clbl×2) - 4(cdiv) = 572 → /2 = 286(cslots)
+  // 286 - 6(padding) = 280(slot) - 76(ico) = 204(cnt)
+  // 204 - 10(left) - 14(right) = 180px
+  const avail = 180;
+  document.querySelectorAll('.tname').forEach(tname=>{
+    const nm=tname.getAttribute('data-name')||tname.textContent;
+    tname.style.transform='';
+    const actual=measureTextW(nm);
+    if(actual>avail)
+      tname.style.transform=`scaleX(${(avail/actual).toFixed(4)})`;
+  });
+}
+
+/* ─── SLOT HTML ─── */
+function iconHtml(typeId,name){
+  const safeName=name.replace(/[:\uff1a]/g,'_');
+  const typeSrc=`icons/${typeId.toLowerCase()}.png`;
+  const nameSrc=`icons/${encodeURIComponent(safeName)}.png`;
+  const svgFb=ICONS[typeId.toLowerCase()]||'';
+  return `<img src="${nameSrc}" data-type-src="${typeSrc}"
+    width="36" height="36" style="object-fit:contain;display:block;"
+    onerror="iconFallback(this)"
+  ><div style="display:none">${svgFb}</div>`;
+}
+function iconFallback(img){
+  const t=img.getAttribute('data-type-src');
+  if(!img.src.endsWith(t)&&img.src!==t){
+    img.onerror=()=>{img.style.display='none';img.nextElementSibling.style.display='block';};
+    img.src=t;
+  }else{img.style.display='none';img.nextElementSibling.style.display='block';}
+}
+function slotHtml(slot){
+  if(slot.type==='FREE')
+    return `<div class="tslot free"><span class="free-lbl">FREE TRIGGER</span></div>`;
+  const tp=TYPES.find(t=>t.id===slot.type);
+  const nm=slot.name||'???';
+  return `<div class="tslot">
+    <div class="tslot-ico"><div class="tslot-ico-inner">${iconHtml(tp.id,nm)}</div></div>
+    <div class="tslot-cnt">
+      <div class="tslot-top">
+        <div class="ttype">${tp.label}</div>
+        <div class="tsep"><div class="tsep-line"></div><div class="tsep-dot"></div></div>
+      </div>
+      <div class="tname-wrap"><div class="tname" data-name="${nm}">${nm}</div></div>
+    </div>
+  </div>`;
+}
+
+/* ─── ACTIONS ─── */
+function randomize(){
+  const ids=TYPES.map(t=>t.id);
+  ['sub','main'].forEach(side=>{
+    state[side]=state[side].map(()=>{
+      const type=ids[Math.floor(Math.random()*ids.length)];
+      const p=PRESETS[type];
+      return{type,name:p.length?p[Math.floor(Math.random()*p.length)].n:''};
+    });
+  });
+  buildEditors(); renderCard();
+}
+function resetAll(){
+  state={sub:[mk(),mk(),mk(),mk()],main:[mk(),mk(),mk(),mk()]};
+  ['char-name','char-style','char-notes','char-team-name'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('char-pos').value='';
+  document.getElementById('char-rank').value='';
+  document.getElementById('char-team-type').value='';
+  document.getElementById('team-name-field').style.display='none';
+  document.getElementById('ed-preview-img').style.display='none';
+  document.querySelector('#img-upload-area .ph').style.display='';
+  document.querySelector('#img-upload-area .ph-icon').style.display='';
+  document.getElementById('card-img').style.display='none';
+  document.querySelector('.out-img-ph').style.display='';
+  buildEditors(); renderCard();
+}
+
+function h2c(){
+  return html2canvas(document.getElementById('output-card'),{
+    scale:2,backgroundColor:null,useCORS:true,allowTaint:true,logging:false
+  });
+}
+function generateCard(){
+  h2c().then(c=>{
+    const dataUrl=c.toDataURL('image/png');
+    const name=(document.getElementById('char-name').value||'TRIGGER SET').trim();
+    const win=window.open('','_blank','width=700,height=700');
+    win.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<title>${name}</title>
+<style>*{margin:0;padding:0}body{background:#0c0c12;display:flex;flex-direction:column;
+align-items:center;justify-content:center;min-height:100vh;gap:14px;padding:20px}
+img{max-width:100%;max-height:90vh;box-shadow:0 8px 40px rgba(0,0,0,.8)}
+.msg{color:#444;font-size:11px;font-family:sans-serif;text-align:center;line-height:1.8}
+a{color:#7aaccf}</style></head><body>
+<img src="${dataUrl}" alt="${name}">
+<div class="msg">右クリック →「画像を別名で保存」<br>または <a href="${dataUrl}" download="${name}.png">クリックして保存</a></div>
+</body></html>`);
+    win.document.close();
+  }).catch(()=>alert('生成に失敗しました。'));
+}
+
+/* ─── DATA EXPORT / IMPORT ─── */
+function exportData(){
+  const data={
+    name:document.getElementById('char-name').value,
+    rank:document.getElementById('char-rank').value,
+    teamType:document.getElementById('char-team-type').value,
+    teamName:document.getElementById('char-team-name').value,
+    style:document.getElementById('char-style').value,
+    notes:document.getElementById('char-notes').value,
+    pos:document.getElementById('char-pos').value,
+    sub:state.sub,
+    main:state.main,
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  const name=data.name||'trigger';
+  a.download=`${name}.json`; a.href=URL.createObjectURL(blob); a.click();
+}
+
+document.getElementById('imp-file').onchange=function(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.name!==undefined) document.getElementById('char-name').value=d.name;
+      if(d.rank!==undefined) document.getElementById('char-rank').value=d.rank;
+      if(d.teamType!==undefined){
+        document.getElementById('char-team-type').value=d.teamType;
+        document.getElementById('team-name-field').style.display=(d.teamType==='隊')?'':'none';
+      }
+      if(d.teamName!==undefined) document.getElementById('char-team-name').value=d.teamName||'';
+      if(d.style!==undefined) document.getElementById('char-style').value=d.style;
+      if(d.notes!==undefined) document.getElementById('char-notes').value=d.notes;
+      if(d.pos!==undefined) document.getElementById('char-pos').value=d.pos||'';
+      if(d.sub) state.sub=d.sub;
+      if(d.main) state.main=d.main;
+      buildEditors(); renderCard();
+      alert('読み込み完了！');
+    }catch(err){alert('読み込みに失敗しました。\nJSONファイルを確認してください。');}
+  };
+  reader.readAsText(file);
+  e.target.value=''; // 同ファイル再読込対応
+};
+
+/* ─── INIT ─── */
+buildEditors(); renderCard();
+document.fonts.ready.then(fitNames);
+</script>
+</body>
+</html>
