@@ -519,6 +519,51 @@ textarea{resize:vertical;line-height:1.5}
 </div>
 
 <script>
+/* ─── ICON MAP: 表示名 → ファイル名（拡張子なし）─── */
+const ICON_MAP={
+  '弧月':                 'kogetu',
+  '弧月改（槍）':         'kogetu_yari',
+  'スコーピオン':         'scorpion',
+  'レイガスト':           'raigast',
+  '双月':                 'futatsuki',
+  'アステロイド':         'asteroid',
+  'メテオラ':             'meteora',
+  'バイパー':             'viper',
+  'ハウンド':             'hound',
+  'アステロイド：拳銃':   'asteroid_handgun',
+  'メテオラ：拳銃':       'meteora_handgun',
+  'バイパー：拳銃':       'viper_handgun',
+  'ハウンド：拳銃':       'hound_handgun',
+  'アステロイド：突撃銃': 'asteroid_ar',
+  'ハウンド：突撃銃':     'hound_ar',
+  'アステロイド：散弾銃': 'asteroid_sg',
+  'メテオラ：散弾銃':     'meteora_sg',
+  'メテオラ：擲弾銃':     'meteora_gl',
+  'イーグレット':         'egret',
+  'ライトニング':         'lightning',
+  'アイビス':             'ibis',
+  'シールド':             'shield',
+  'エスクード':           'escudo',
+  'スイッチボックス':     'switchbox',
+  'バッグワーム':         'bagworm',
+  'バッグワームタグ':     'bagworm_tag',
+  'グラスホッパー':       'grasshopper',
+  'スパイダー':           'spider',
+  'カメレオン':           'chameleon',
+  'スタアメーカー':       'starmaker',
+  '強化レーダー':         'radar_ex',
+  'サイレンサー':         'silencer',
+  '鉛弾':                 'lead_bullet',
+  '旋空':                 'senku',
+  '幻踊':                 'genyou',
+  'スラスター':           'thruster',
+  '韋駄天':               'idaten',
+  'ダミービーコン':       'dummy_beacon',
+  'テレポーター':         'teleporter',
+  'タイマー':             'timer',
+  '魔光':                 'makou',
+};
+
 /* ─── TYPES ─── */
 const TYPES=[
   {id:'FREE',    label:'FREE TRIGGER',    icon:null},
@@ -749,9 +794,10 @@ function fitNames(){
 
 /* ─── SLOT HTML ─── */
 function iconHtml(typeId,name,fileName){
-  const safeName=(fileName||name).replace(/[:\uff1a]/g,'_');
+  // ICON_MAP → f フィールド → タイプ別 の順で解決
+  const mapped=ICON_MAP[name]||fileName||null;
   const typeSrc=`icons/${typeId.toLowerCase()}.png`;
-  const nameSrc=`icons/${encodeURIComponent(safeName)}.png`;
+  const nameSrc=mapped?`icons/${mapped}.png`:typeSrc;
   const svgFb=ICONS[typeId.toLowerCase()]||'';
   return `<img src="${nameSrc}" data-type-src="${typeSrc}"
     style="width:68px;height:68px;object-fit:contain;display:block;"
@@ -763,7 +809,9 @@ function iconHtml(typeId,name,fileName){
 }
 function iconFallback(img){
   const t=img.getAttribute('data-type-src');
-  if(!img.src.endsWith(t)&&img.src!==t){
+  const cur=img.src;
+  // nameSrc と typeSrc が異なる場合のみタイプ別にフォールバック
+  if(!cur.endsWith(decodeURIComponent(t.split('/').pop()))&&cur!==location.origin+'/'+t&&!cur.endsWith(t.split('/').pop())){
     img.onerror=()=>showNoImage(img);
     img.src=t;
   }else{ showNoImage(img); }
