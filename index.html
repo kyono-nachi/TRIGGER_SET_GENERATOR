@@ -239,6 +239,63 @@ textarea{resize:vertical;line-height:1.5}
   font-size:11px;color:#888;line-height:1.7;
   white-space:pre-wrap;
 }
+
+/* ══ MOBILE TAB MODE (< 1100px) ══ */
+@media (max-width: 1099px) {
+  .wrap { flex-direction: column; min-height: 0; }
+
+  /* タブバー */
+  .tab-bar {
+    display: flex;
+    background: #000;
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 11px 0;
+    background: none;
+    border: none;
+    color: var(--txt2);
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn.active {
+    color: #00b4b0;
+    border-bottom-color: #00b4b0;
+  }
+
+  /* エディタ・プレビューの表示切替 */
+  .ed   { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+  .prev { padding: 16px 12px; }
+  .ed.hidden, .prev.hidden { display: none; }
+
+  /* カードをscaleで収める */
+  .prev-scale-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    overflow: hidden;
+  }
+  #card-wrapper {
+    transform-origin: top center;
+  }
+  .prev-meta { width: 100%; max-width: 100%; }
+}
+
+/* PC: タブバー非表示 */
+@media (min-width: 1100px) {
+  .tab-bar { display: none; }
+  .ed.hidden, .prev.hidden { display: flex !important; }
+  .prev-scale-wrap { display: contents; }
+}
 </style>
 </head>
 <body>
@@ -248,6 +305,10 @@ textarea{resize:vertical;line-height:1.5}
   <span class="hdr-sub">ワールドトリガー風 キャラクターカードメーカー</span>
 </div>
 
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('input')" id="tab-input">INPUT　入力</button>
+  <button class="tab-btn"        onclick="switchTab('preview')" id="tab-preview">PREVIEW　プレビュー</button>
+</div>
 <div class="wrap">
   <!-- ═══ EDITOR ═══ -->
   <div class="ed">
@@ -360,6 +421,7 @@ textarea{resize:vertical;line-height:1.5}
       <span class="prev-tag">620px width</span>
     </div>
 
+    <div class="prev-scale-wrap">
     <div id="card-wrapper">
     <div id="output-card">
 
@@ -413,8 +475,10 @@ textarea{resize:vertical;line-height:1.5}
 
     </div><!-- /output-card -->
     </div><!-- /card-wrapper -->
+    </div><!-- /prev-scale-wrap -->
 
-    <span class="prev-tag" style="opacity:.3;margin-top:4px">※ カードジェネレートで別ウィンドウ表示</span>
+    <button class="btn btn-gen" id="prev-gen-btn" onclick="generateCard()" style="width:300px;margin-top:4px">&#9654; カードジェネレート</button>
+    <span class="prev-tag" style="opacity:.3;margin-top:4px">※ 別ウィンドウで表示・保存</span>
   </div>
 </div>
 
@@ -735,7 +799,64 @@ function generateCard(){
 align-items:center;justify-content:center;min-height:100vh;gap:14px;padding:20px}
 img{max-width:100%;max-height:90vh;box-shadow:0 8px 40px rgba(0,0,0,.8)}
 .msg{color:#444;font-size:11px;font-family:sans-serif;text-align:center;line-height:1.8}
-a{color:#7aaccf}</style></head><body>
+a{color:#7aaccf}
+/* ══ MOBILE TAB MODE (< 1100px) ══ */
+@media (max-width: 1099px) {
+  .wrap { flex-direction: column; min-height: 0; }
+
+  /* タブバー */
+  .tab-bar {
+    display: flex;
+    background: #000;
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 11px 0;
+    background: none;
+    border: none;
+    color: var(--txt2);
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn.active {
+    color: #00b4b0;
+    border-bottom-color: #00b4b0;
+  }
+
+  /* エディタ・プレビューの表示切替 */
+  .ed   { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+  .prev { padding: 16px 12px; }
+  .ed.hidden, .prev.hidden { display: none; }
+
+  /* カードをscaleで収める */
+  .prev-scale-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    overflow: hidden;
+  }
+  #card-wrapper {
+    transform-origin: top center;
+  }
+  .prev-meta { width: 100%; max-width: 100%; }
+}
+
+/* PC: タブバー非表示 */
+@media (min-width: 1100px) {
+  .tab-bar { display: none; }
+  .ed.hidden, .prev.hidden { display: flex !important; }
+  .prev-scale-wrap { display: contents; }
+}
+</style></head><body>
 <img src="${dataUrl}" alt="${name}">
 <div class="msg">右クリック →「画像を別名で保存」<br>または <a href="${dataUrl}" download="${name}.png">クリックして保存</a></div>
 </body></html>`);
@@ -787,6 +908,43 @@ document.getElementById('imp-file').onchange=function(e){
   reader.readAsText(file);
   e.target.value=''; // 同ファイル再読込対応
 };
+
+
+/* ── TAB SWITCH ── */
+function switchTab(tab){
+  const ed   = document.querySelector('.ed');
+  const prev = document.querySelector('.prev');
+  const btnI = document.getElementById('tab-input');
+  const btnP = document.getElementById('tab-preview');
+  if(tab==='input'){
+    ed.classList.remove('hidden');
+    prev.classList.add('hidden');
+    btnI.classList.add('active');
+    btnP.classList.remove('active');
+  } else {
+    ed.classList.add('hidden');
+    prev.classList.remove('hidden');
+    btnP.classList.add('active');
+    btnI.classList.remove('active');
+    scaleCard();
+  }
+}
+
+function scaleCard(){
+  if(window.innerWidth >= 1100) return;
+  const wrap = document.getElementById('card-wrapper');
+  if(!wrap) return;
+  const avail = document.querySelector('.prev-scale-wrap').clientWidth;
+  const natural = wrap.scrollWidth / (parseFloat(wrap.style.transform.replace('scale(','')) || 1);
+  const scale = Math.min(1, avail / 652); // 620 + 16*2 padding
+  wrap.style.transform = scale < 1 ? `scale(${scale.toFixed(3)})` : '';
+  wrap.style.transformOrigin = 'top center';
+  // ラッパーの高さをscale後に合わせる
+  const h = wrap.getBoundingClientRect().height;
+  document.querySelector('.prev-scale-wrap').style.height = h + 'px';
+}
+
+window.addEventListener('resize', ()=>{ if(window.innerWidth < 1100) scaleCard(); });
 
 /* ─── INIT ─── */
 buildEditors(); renderCard();
