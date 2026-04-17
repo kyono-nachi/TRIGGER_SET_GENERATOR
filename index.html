@@ -433,14 +433,14 @@ const TYPES=[
 /* ─── PRESETS ─── */
 const PRESETS={
   FREE:[],
-  ATTACKER:[{n:'弧月',r:'こげつ'},{n:'スコーピオン'},{n:'レイガスト'},{n:'双月',r:'ふたつき'}],
+  ATTACKER:[{n:'弧月',r:'こげつ'},{n:'スコーピオン'},{n:'レイガスト'},{n:'弧月改（槍）',f:'弧月_槍'}],
   GUNNER:[
     {n:'アステロイド'},{n:'メテオラ'},{n:'バイパー'},{n:'ハウンド'},
     {n:'アステロイド：拳銃',r:'ハンドガン'},{n:'メテオラ：拳銃',r:'ハンドガン'},
     {n:'バイパー：拳銃',r:'ハンドガン'},{n:'ハウンド：拳銃',r:'ハンドガン'},
     {n:'アステロイド：突撃銃',r:'アサルトライフル'},{n:'ハウンド：突撃銃',r:'アサルトライフル'},
     {n:'アステロイド：散弾銃',r:'ショットガン'},{n:'メテオラ：散弾銃',r:'ショットガン'},
-    {n:'アステロイド：機関砲',r:'ガトリング'},{n:'メテオラ：擲弾銃',r:'グレネードガン'},
+    {n:'メテオラ：擲弾銃',r:'グレネードガン'},
   ],
   SNIPER:[{n:'イーグレット'},{n:'ライトニング'},{n:'アイビス'}],
   DEFENSE:[{n:'シールド'},{n:'エスクード'}],
@@ -449,10 +449,10 @@ const PRESETS={
     {n:'バッグワーム'},{n:'バッグワームタグ'},{n:'グラスホッパー'},{n:'スパイダー'},
     {n:'カメレオン'},{n:'スタアメーカー'},{n:'強化レーダー'},{n:'サイレンサー'},
     {n:'鉛弾',r:'レッドバレット'},
-    {n:'旋空',r:'せんくう'},{n:'幻踊',r:'げんよう'},{n:'スラスター'},{n:'接続器',r:'コネクター'},
+    {n:'旋空',r:'せんくう'},{n:'幻踊',r:'げんよう'},{n:'スラスター'},
     {n:'韋駄天',r:'いだてん'},{n:'ダミービーコン'},{n:'テレポーター'},
     {n:'タイマー'},{n:'魔光'},
-    {n:'全武装',r:'フルアームズ'},{n:'ガイスト'},
+    
   ],
 };
 
@@ -648,30 +648,40 @@ function fitNames(){
 }
 
 /* ─── SLOT HTML ─── */
-function iconHtml(typeId,name){
-  const safeName=name.replace(/[:\uff1a]/g,'_');
+function iconHtml(typeId,name,fileName){
+  const safeName=(fileName||name).replace(/[:\uff1a]/g,'_');
   const typeSrc=`icons/${typeId.toLowerCase()}.png`;
   const nameSrc=`icons/${encodeURIComponent(safeName)}.png`;
   const svgFb=ICONS[typeId.toLowerCase()]||'';
   return `<img src="${nameSrc}" data-type-src="${typeSrc}"
     style="width:68px;height:68px;object-fit:contain;display:block;"
     onerror="iconFallback(this)"
-  ><div style="display:none">${svgFb}</div>`;
+  ><div style="display:none;width:68px;height:68px;align-items:center;justify-content:center;flex-direction:column;gap:2px;">
+    <span style="font-family:'Oswald',sans-serif;font-size:9px;font-weight:400;color:#444;letter-spacing:1px;line-height:1;">NO</span>
+    <span style="font-family:'Oswald',sans-serif;font-size:9px;font-weight:400;color:#444;letter-spacing:1px;line-height:1;">IMAGE</span>
+  </div>`;
 }
 function iconFallback(img){
   const t=img.getAttribute('data-type-src');
   if(!img.src.endsWith(t)&&img.src!==t){
-    img.onerror=()=>{img.style.display='none';img.nextElementSibling.style.display='block';};
+    img.onerror=()=>showNoImage(img);
     img.src=t;
-  }else{img.style.display='none';img.nextElementSibling.style.display='block';}
+  }else{ showNoImage(img); }
+}
+function showNoImage(img){
+  img.style.display='none';
+  const fb=img.nextElementSibling;
+  fb.style.display='flex';
 }
 function slotHtml(slot){
   if(slot.type==='FREE')
     return `<div class="tslot free"><span class="free-lbl">FREE TRIGGER</span></div>`;
   const tp=TYPES.find(t=>t.id===slot.type);
   const nm=slot.name||'???';
+  const preset=(PRESETS[slot.type]||[]).find(p=>p.n===nm);
+  const fileName=preset?.f||null;
   return `<div class="tslot">
-    <div class="tslot-ico"><div class="tslot-ico-inner">${iconHtml(tp.id,nm)}</div></div>
+    <div class="tslot-ico"><div class="tslot-ico-inner">${iconHtml(tp.id,nm,fileName)}</div></div>
     <div class="tslot-cnt">
       <div class="tslot-top">
         <div class="ttype">${tp.label}</div>
