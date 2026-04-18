@@ -719,13 +719,22 @@ function makeRow(side,i){
     }
     nsel.disabled=false;
     p.forEach(pr=>{
-      const o=document.createElement('option'); o.value=pr.n; o.textContent=pr.n;
-      if(pr.n===cur) o.selected=true; nsel.appendChild(o);
+      const avail=isAvailable(pr);
+      const o=document.createElement('option'); o.value=pr.n;
+      o.textContent=avail?pr.n:`${pr.n}（${pr.req}が必要）`;
+      o.disabled=!avail; o.style.color=avail?'':'#555';
+      if(pr.n===cur) o.selected=true; // 必ずselectedをセット
+      nsel.appendChild(o);
     });
     const oc=document.createElement('option'); oc.value='__c__'; oc.textContent='✏ カスタム入力...'; nsel.appendChild(oc);
     const isc=cur&&!p.find(pr=>pr.n===cur);
-    if(isc){oc.selected=true;cinp.value=cur;cinp.style.display='';}
-    else{cinp.style.display='none';if(!cur&&p.length){nsel.value=p[0].n;state[side][i].name=p[0].n;}}
+    if(isc){
+      oc.selected=true; cinp.value=cur; cinp.style.display='';
+    } else {
+      cinp.style.display='none';
+      if(cur) nsel.value=cur; // selectedの後にvalueも明示セット（ブラウザ差異を吸収）
+      else if(p.length){ nsel.value=p[0].n; state[side][i].name=p[0].n; }
+    }
   }
   rebuildNsel(slot.type,slot.name);
   nsel.onchange=()=>{
@@ -794,6 +803,7 @@ function measureTextW(text){
 
 function refreshAllNsel(){
   // 全スロットの nsel を再評価（依存チェック更新）
+  // o.value で厳密マッチのみ（startsWith は誤マッチの原因になるため使わない）
   ['sub','main'].forEach(side=>{
     const rows=document.getElementById(`${side}-ed`).querySelectorAll('.srow');
     rows.forEach((row,i)=>{
@@ -803,7 +813,7 @@ function refreshAllNsel(){
       const presets=PRESETS[slot.type]||[];
       Array.from(nsel.options).forEach(o=>{
         if(o.value==='__c__') return;
-        const preset=presets.find(p=>p.n===o.value||(o.value&&o.textContent.startsWith(o.value)));
+        const preset=presets.find(p=>p.n===o.value); // 厳密一致のみ
         if(!preset) return;
         const avail=isAvailable(preset);
         o.disabled=!avail;
