@@ -2,7 +2,7 @@
   "name": "TRIGGER SET GENERATOR",
   "short_name": "TRIGGER SET",
   "description": "ワールドトリガー風 キャラクタートリガーセットメーカー",
-  "start_url": "/",
+  "start_url": "/TRIGGER_SET_GENERATOR/",
   "display": "standalone",
   "background_color": "#0c0c12",
   "theme_color": "#000000",
@@ -20,5 +20,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "scope": "/TRIGGER_SET_GENERATOR/"
 }
