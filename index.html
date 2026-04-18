@@ -886,17 +886,58 @@ function slotHtml(slot){
 
 /* ─── ACTIONS ─── */
 function randomize(){
-  const ids=TYPES.map(t=>t.id);
+  // ── 重み付きタイプ選択 ──
+  const TYPE_WEIGHTS={
+    ATTACKER:10, GUNNER:10, DEFENSE:8, OPTION:10,
+    SNIPER:3, TRAPPER:1, FREE:5
+  };
+  const weightedPool=[];
+  Object.entries(TYPE_WEIGHTS).forEach(([id,w])=>{
+    for(let i=0;i<w;i++) weightedPool.push(id);
+  });
+
+  function pickType(){ return weightedPool[Math.floor(Math.random()*weightedPool.length)]; }
+
+  function pickName(type, usedInSide){
+    const p=PRESETS[type]||[];
+    // 依存チェック＋同サイド重複除外
+    const pool=p.filter(pr=>isAvailable(pr)&&!usedInSide.includes(pr.n));
+    if(!pool.length) return p.filter(pr=>!pr.req&&!usedInSide.includes(pr.n))[0]?.n||'';
+    return pool[Math.floor(Math.random()*pool.length)].n;
+  }
+
+  // ── TRAPPERチェック（全体で1枠分の確率）──
+  const trapperRoll=Math.random()<(1/47); // 重み合計47中1
+  if(trapperRoll){
+    // TRAPPER特殊構成
+    const others=Object.keys(PRESETS).filter(t=>t!=='TRAPPER'&&t!=='FREE');
+    const randType=others[Math.floor(Math.random()*others.length)];
+    const randName=pickName(randType,[]);
+    state.sub=[
+      {type:'TRAPPER',name:'スイッチボックス'},
+      {type:'OPTION', name:'バッグワーム'},
+      {type:randType, name:randName},
+      {type:'FREE',   name:''},
+    ];
+    state.main=[
+      {type:'FREE',name:''},{type:'FREE',name:''},
+      {type:'FREE',name:''},{type:'FREE',name:''},
+    ];
+    buildEditors(); renderCard();
+    return;
+  }
+
+  // ── 通常ランダム ──
   ['sub','main'].forEach(side=>{
+    const usedInSide=[];
     state[side]=state[side].map(()=>{
-      const type=ids[Math.floor(Math.random()*ids.length)];
-      const p=PRESETS[type];
-      // 依存チェックを通過するものだけ候補に
-      const avail=p.filter(pr=>isAvailable(pr));
-      const pool=avail.length?avail:p.filter(pr=>!pr.req);
-      return{type,name:pool.length?pool[Math.floor(Math.random()*pool.length)].n:''};
+      const type=pickType();
+      const name=type==='FREE'?'':pickName(type,usedInSide);
+      if(name) usedInSide.push(name);
+      return{type,name};
     });
   });
+
   buildEditors(); renderCard();
 }
 function resetAll(){
