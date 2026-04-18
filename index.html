@@ -886,10 +886,10 @@ function slotHtml(slot){
 
 /* ─── ACTIONS ─── */
 function randomize(){
-  // ── 重み付きタイプ選択 ──
+  // ── 重み付きタイプ選択（TRAPPERは通常プールに含めない）──
   const TYPE_WEIGHTS={
     ATTACKER:10, GUNNER:10, DEFENSE:8, OPTION:10,
-    SNIPER:3, TRAPPER:1, FREE:5
+    SNIPER:3, FREE:5
   };
   const weightedPool=[];
   Object.entries(TYPE_WEIGHTS).forEach(([id,w])=>{
@@ -902,14 +902,14 @@ function randomize(){
     const p=PRESETS[type]||[];
     // 依存チェック＋同サイド重複除外
     const pool=p.filter(pr=>isAvailable(pr)&&!usedInSide.includes(pr.n));
-    if(!pool.length) return p.filter(pr=>!pr.req&&!usedInSide.includes(pr.n))[0]?.n||'';
-    return pool[Math.floor(Math.random()*pool.length)].n;
+    if(pool.length) return pool[Math.floor(Math.random()*pool.length)].n;
+    // フォールバック: req なし かつ未使用
+    const fallback=p.filter(pr=>!pr.req&&!usedInSide.includes(pr.n));
+    return fallback.length?fallback[Math.floor(Math.random()*fallback.length)].n:'';
   }
 
-  // ── TRAPPERチェック（全体で1枠分の確率）──
-  const trapperRoll=Math.random()<(1/47); // 重み合計47中1
-  if(trapperRoll){
-    // TRAPPER特殊構成
+  // ── TRAPPER判定（約5%）──
+  if(Math.random()<0.05){
     const others=Object.keys(PRESETS).filter(t=>t!=='TRAPPER'&&t!=='FREE');
     const randType=others[Math.floor(Math.random()*others.length)];
     const randName=pickName(randType,[]);
@@ -930,12 +930,17 @@ function randomize(){
   // ── 通常ランダム ──
   ['sub','main'].forEach(side=>{
     const usedInSide=[];
-    state[side]=state[side].map(()=>{
+    const slots=[];
+    for(let i=0;i<4;i++){
       const type=pickType();
-      const name=type==='FREE'?'':pickName(type,usedInSide);
-      if(name) usedInSide.push(name);
-      return{type,name};
-    });
+      let name='';
+      if(type!=='FREE'){
+        name=pickName(type,usedInSide);
+        if(name) usedInSide.push(name);
+      }
+      slots.push({type,name});
+    }
+    state[side]=slots;
   });
 
   buildEditors(); renderCard();
