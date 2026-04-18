@@ -337,7 +337,7 @@ textarea{resize:vertical;line-height:1.5}
 <body>
 
 <div class="hdr">
-  <span class="hdr-ttl">▶▶ TRIGGER SET GENERATOR ◀◀</span>
+  <span class="hdr-ttl">&#x25B6;&#xFE0E;&#x25B6;&#xFE0E; TRIGGER SET GENERATOR &#x25C4;&#xFE0E;&#x25C4;&#xFE0E;</span>
   <span class="hdr-sub">ワールドトリガー風 キャラクターカードメーカー</span>
 </div>
 
@@ -440,7 +440,8 @@ textarea{resize:vertical;line-height:1.5}
         <button class="btn btn-rnd" onclick="randomize()"> ランダム</button>
         <button class="btn btn-rst" onclick="resetAll()">↺ リセット</button>
       </div>
-      <button class="btn btn-gen" onclick="generateCard()">▶ カードジェネレート</button>
+      <button class="btn btn-gen" onclick="generateCard()"> カードジェネレート</button>
+      <p style="font-size:10px;color:#555;letter-spacing:.3px;margin-top:2px;line-height:1.6">※PC以外ではカード生成できません。<br>プレビューをスクショしましょう。</p>
       <div class="acts-row">
         <button class="btn btn-exp" onclick="exportData()"> データ出力</button>
         <button class="btn btn-imp" onclick="document.getElementById('imp-file').click()"> データ読込</button>
@@ -480,10 +481,10 @@ textarea{resize:vertical;line-height:1.5}
 
       <!-- ② トリガーセット -->
       <div class="chead">
-        <span class="carr">▶▶</span>
+        <span class="carr">&#x25B6;&#xFE0E;&#x25B6;&#xFE0E;</span>
         <span class="ctitle">TRIGGER SET</span>
         <span class="ctitle-ja">トリガーセット</span>
-        <span class="carr" style="display:inline-block;transform:scaleX(-1)">▶▶</span>
+        <span class="carr" style="display:inline-block;transform:scaleX(-1)">&#x25B6;&#xFE0E;&#x25B6;&#xFE0E;</span>
       </div>
       <div class="cbody">
         <div class="clbl sub">
@@ -513,7 +514,8 @@ textarea{resize:vertical;line-height:1.5}
     </div><!-- /card-wrapper -->
     </div><!-- /prev-scale-wrap -->
 
-    <button class="btn btn-gen" id="prev-gen-btn" onclick="generateCard()" style="width:300px;margin-top:4px">&#9654; カードジェネレート</button>
+    <button class="btn btn-gen" id="prev-gen-btn" onclick="generateCard()" style="width:300px;margin-top:4px"> カードジェネレート</button>
+    <p style="font-size:10px;color:#555;letter-spacing:.3px;margin-top:2px;line-height:1.6;text-align:center">※PC以外ではカード生成できません。<br>プレビューをスクショしましょう。</p>
     <span class="prev-tag" style="opacity:.3;margin-top:4px">※ 別ウィンドウで表示・保存</span>
   </div>
 </div>
