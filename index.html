@@ -527,7 +527,6 @@ const ICON_MAP={
   '弧月改（槍）':         'kogetu_yari',
   'スコーピオン':         'scorpion',
   'レイガスト':           'raigast',
-  '双月':                 'futatsuki',
   'アステロイド':         'asteroid',
   'メテオラ':             'meteora',
   'バイパー':             'viper',
@@ -596,7 +595,7 @@ const PRESETS={
     {n:'バッグワーム'},{n:'バッグワームタグ'},{n:'グラスホッパー'},{n:'スパイダー'},
     {n:'カメレオン'},{n:'スタアメーカー'},{n:'強化レーダー'},{n:'サイレンサー'},
     {n:'鉛弾',r:'レッドバレット'},
-    {n:'旋空',r:'せんくう'},{n:'幻踊',r:'げんよう'},{n:'スラスター'},
+    {n:'旋空',r:'せんくう',req:'弧月'},{n:'幻踊',r:'げんよう',req:'弧月'},{n:'スラスター',req:'レイガスト'},
     {n:'韋駄天',r:'いだてん'},{n:'ダミービーコン'},{n:'テレポーター'},
     {n:'タイマー'},{n:'魔光'},
     
@@ -674,6 +673,18 @@ function teamTypeChanged(){
   updateCard();
 }
 
+
+/* ─── 依存チェック用ヘルパー ─── */
+function getAllSelectedNames(){
+  return [...state.sub, ...state.main]
+    .filter(s=>s.type!=='FREE')
+    .map(s=>s.name);
+}
+
+function isAvailable(preset){
+  if(!preset.req) return true;
+  return getAllSelectedNames().includes(preset.req);
+}
 /* ─── EDITOR ─── */
 function buildEditors(){
   ['sub','main'].forEach(side=>{
@@ -768,6 +779,7 @@ function renderCard(){
   document.getElementById('card-style').textContent=style;
   document.getElementById('card-notes').textContent=notes;
   document.fonts.ready.then(fitNames);
+  refreshAllNsel();
 }
 function updateCard(){renderCard();}
 
@@ -779,6 +791,36 @@ function measureTextW(text){
   return ctx.measureText(text).width;
 }
 
+
+function refreshAllNsel(){
+  // 全スロットの nsel を再評価（依存チェック更新）
+  ['sub','main'].forEach(side=>{
+    const rows=document.getElementById(`${side}-ed`).querySelectorAll('.srow');
+    rows.forEach((row,i)=>{
+      const nsel=row.querySelector('.nsel-fw');
+      if(!nsel||nsel.disabled) return;
+      const slot=state[side][i];
+      const presets=PRESETS[slot.type]||[];
+      Array.from(nsel.options).forEach(o=>{
+        if(o.value==='__c__') return;
+        const preset=presets.find(p=>p.n===o.value||(o.value&&o.textContent.startsWith(o.value)));
+        if(!preset) return;
+        const avail=isAvailable(preset);
+        o.disabled=!avail;
+        o.style.color=avail?'':'#555';
+        o.textContent=avail?preset.n:`${preset.n}（${preset.req}が必要）`;
+        // 現在選択中で無効になった場合は先頭の有効なオプションに変更
+        if(!avail&&o.selected){
+          const firstValid=Array.from(nsel.options).find(op=>!op.disabled&&op.value!=='__c__');
+          if(firstValid){
+            nsel.value=firstValid.value;
+            state[side][i].name=firstValid.value;
+          }
+        }
+      });
+    });
+  });
+}
 function fitNames(){
   // 利用可能幅を CSS 値から計算
   // 620(card) - 22(clbl×2) - 4(cdiv) = 572 → /2 = 286(cslots)
@@ -849,7 +891,10 @@ function randomize(){
     state[side]=state[side].map(()=>{
       const type=ids[Math.floor(Math.random()*ids.length)];
       const p=PRESETS[type];
-      return{type,name:p.length?p[Math.floor(Math.random()*p.length)].n:''};
+      // 依存チェックを通過するものだけ候補に
+      const avail=p.filter(pr=>isAvailable(pr));
+      const pool=avail.length?avail:p.filter(pr=>!pr.req);
+      return{type,name:pool.length?pool[Math.floor(Math.random()*pool.length)].n:''};
     });
   });
   buildEditors(); renderCard();
@@ -886,62 +931,6 @@ align-items:center;justify-content:center;min-height:100vh;gap:14px;padding:20px
 img{max-width:100%;max-height:90vh;box-shadow:0 8px 40px rgba(0,0,0,.8)}
 .msg{color:#444;font-size:11px;font-family:sans-serif;text-align:center;line-height:1.8}
 a{color:#7aaccf}
-/* ══ MOBILE TAB MODE (< 1100px) ══ */
-@media (max-width: 1099px) {
-  .wrap { flex-direction: column; min-height: 0; }
-
-  /* タブバー */
-  .tab-bar {
-    display: flex;
-    background: #000;
-    border-bottom: 2px solid var(--border);
-    flex-shrink: 0;
-  }
-  .tab-btn {
-    flex: 1;
-    padding: 11px 0;
-    background: none;
-    border: none;
-    color: var(--txt2);
-    font-family: 'Oswald', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    transition: color .15s, border-color .15s;
-  }
-  .tab-btn.active {
-    color: #00b4b0;
-    border-bottom-color: #00b4b0;
-  }
-
-  /* エディタ・プレビューの表示切替 */
-  .ed   { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-  .prev { padding: 16px 12px; }
-  .ed.hidden, .prev.hidden { display: none; }
-
-  /* カードをscaleで収める */
-  .prev-scale-wrap {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    overflow: hidden;
-  }
-  #card-wrapper {
-    transform-origin: top center;
-  }
-  .prev-meta { width: 100%; max-width: 100%; }
-}
-
-/* PC: タブバー非表示 */
-@media (min-width: 1100px) {
-  .tab-bar { display: none; }
-  .ed.hidden, .prev.hidden { display: flex !important; }
-  .prev-scale-wrap { display: contents; }
-}
 </style></head><body>
 <img src="${dataUrl}" alt="${name}">
 <div class="msg">右クリック →「画像を別名で保存」<br>または <a href="${dataUrl}" download="${name}.png">クリックして保存</a></div>
@@ -1035,6 +1024,10 @@ window.addEventListener('resize', ()=>{ if(window.innerWidth < 1100) scaleCard()
 /* ─── INIT ─── */
 buildEditors(); renderCard();
 document.fonts.ready.then(fitNames);
+// モバイルは初期状態でプレビューを非表示
+if(window.innerWidth<1100){
+  document.querySelector('.prev').classList.add('hidden');
+}
 </script>
 </body>
 </html>
