@@ -188,7 +188,7 @@ textarea{resize:vertical;line-height:1.5}
   display:inline-flex;align-items:center;
 }
 .badge-rank,.badge-team,.badge-pos{background:#333;border:none;color:#fff;font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 8px;display:inline-flex;align-items:center;flex-shrink:0}
-.out-style-txt{font-size:11px;color:#aaa;line-height:1.5;white-space:pre-wrap}
+.out-style-txt{font-size:11px;color:#aaa;line-height:1.5;white-space:pre-wrap;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
 
 /* ② TRIGGER SET header */
 .chead{
@@ -273,7 +273,7 @@ textarea{resize:vertical;line-height:1.5}
 .out-notes-body{
   padding:8px 12px;
   font-size:11px;color:#888;line-height:1.7;
-  white-space:pre-wrap;
+  white-space:pre-wrap;min-height:40px;
 }
 
 /* ══ MOBILE TAB MODE (< 1100px) ══ */
@@ -412,12 +412,12 @@ textarea{resize:vertical;line-height:1.5}
 
         <div class="field">
           <label>戦闘スタイル</label>
-          <textarea id="char-style" rows="2" placeholder="例：接近戦オールラウンダー" maxlength="80" oninput="updateCard()"></textarea>
+          <textarea id="char-style" rows="4" placeholder="例：接近戦オールラウンダー" maxlength="150" oninput="updateCard()"></textarea>
         </div>
 
         <div class="field">
           <label>備考</label>
-          <textarea id="char-notes" rows="3" placeholder="例：玉狛支部所属。B級11位。" maxlength="120" oninput="updateCard()"></textarea>
+          <textarea id="char-notes" rows="5" placeholder="例：玉狛支部所属。B級11位。" oninput="updateCard()"></textarea>
         </div>
 
       </div>
