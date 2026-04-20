@@ -182,6 +182,7 @@ textarea{resize:vertical;line-height:1.5}
   font-size:24px;font-weight:900;color:#fff;line-height:1.1;
 }
 .out-name.empty{font-size:16px;color:#555}
+.out-yomi{font-size:12px;color:#666;font-weight:400;letter-spacing:.5px;white-space:nowrap}
 .badge{
   font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;
   padding:1px 7px;letter-spacing:.5px;
@@ -368,6 +369,10 @@ textarea{resize:vertical;line-height:1.5}
           <label>名前</label>
           <input type="text" id="char-name" placeholder="例：三雲修" maxlength="20" oninput="updateCard()">
         </div>
+        <div class="field">
+          <label>読み仮名</label>
+          <input type="text" id="char-yomi" placeholder="例：みくもおさむ" maxlength="30" oninput="updateCard()">
+        </div>
 
         <!-- 所属 -->
         <div class="field-row">
@@ -471,6 +476,7 @@ textarea{resize:vertical;line-height:1.5}
         <div class="out-info">
           <div class="out-name-row">
             <span class="out-name empty" id="card-name">— NAME —</span>
+            <span class="out-yomi" id="card-yomi"></span>
             <span class="badge badge-rank" id="card-rank" style="display:none"></span>
             <span class="badge badge-team" id="card-team" style="display:none"></span>
             <span class="badge badge-pos" id="card-pos" style="display:none"></span>
@@ -758,6 +764,7 @@ function renderCard(){
     document.getElementById(`${side}-card`).innerHTML=state[side].map(s=>slotHtml(s)).join('');
   });
   const name=(document.getElementById('char-name').value||'').trim();
+  const yomi=(document.getElementById('char-yomi').value||'').trim();
   const rank=document.getElementById('char-rank').value;
   const teamType=document.getElementById('char-team-type').value;
   const teamName=(document.getElementById('char-team-name').value||'').trim();
@@ -768,6 +775,8 @@ function renderCard(){
   const nameEl=document.getElementById('card-name');
   if(name){nameEl.textContent=name;nameEl.classList.remove('empty');}
   else{nameEl.textContent='— NAME —';nameEl.classList.add('empty');}
+  const yomiEl=document.getElementById('card-yomi');
+  yomiEl.textContent=yomi?`（${yomi}）`:'';
 
   // 所属バッジ
   const pos=(document.getElementById('char-pos').value||'').trim();
@@ -957,7 +966,7 @@ function randomize(){
 }
 function resetAll(){
   state={sub:[mk(),mk(),mk(),mk()],main:[mk(),mk(),mk(),mk()]};
-  ['char-name','char-style','char-notes','char-team-name'].forEach(id=>document.getElementById(id).value='');
+  ['char-name','char-yomi','char-style','char-notes','char-team-name'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('char-pos').value='';
   document.getElementById('char-rank').value='';
   document.getElementById('char-team-type').value='';
@@ -999,6 +1008,7 @@ a{color:#7aaccf}
 function exportData(){
   const data={
     name:document.getElementById('char-name').value,
+    yomi:document.getElementById('char-yomi').value,
     rank:document.getElementById('char-rank').value,
     teamType:document.getElementById('char-team-type').value,
     teamName:document.getElementById('char-team-name').value,
@@ -1021,6 +1031,7 @@ document.getElementById('imp-file').onchange=function(e){
     try{
       const d=JSON.parse(ev.target.result);
       if(d.name!==undefined) document.getElementById('char-name').value=d.name;
+      if(d.yomi!==undefined) document.getElementById('char-yomi').value=d.yomi||'';
       if(d.rank!==undefined) document.getElementById('char-rank').value=d.rank;
       if(d.teamType!==undefined){
         document.getElementById('char-team-type').value=d.teamType;
